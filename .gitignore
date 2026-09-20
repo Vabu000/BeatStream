@@ -13,3 +13,6 @@
 .externalNativeBuild
 .cxx
 local.properties
+# ЛР №1: SonarCloud scanner (завантажується автоматично scan.bat)
+.sonar-scanner/
+.scannerwork/
