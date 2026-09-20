@@ -1,0 +1,6 @@
+<?xml version="1.0" encoding="utf-8"?>
+<paths>
+    <!-- ЛР №12 Завдання 3: Шляхи для збереження фото у внутрішньому сховищі (filesDir) -->
+    <files-path name="concert_photos" path="concert_photos/" />
+    <cache-path name="cache" path="." />
+</paths>
