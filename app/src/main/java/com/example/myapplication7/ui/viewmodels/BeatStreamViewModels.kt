@@ -75,53 +75,52 @@ class BeatStreamViewModel(application: Application) : AndroidViewModel(applicati
         loadConcerts()
     }
 
+    // ЛР №1 Завдання 4 (Рефакторинг): Extract Method — спільна обробка NetworkResult
+    // для loadConcerts() і refreshConcerts(). Когнітивна складність знижена.
+    // ДО: логіка when{} дублювалась у двох місцях (~12 рядків × 2).
+    // ПІСЛЯ: один метод, кожен виклик — 1 рядок.
+    private suspend fun handleConcertListResult(result: NetworkResult<List<Concert>>) {
+        when (result) {
+            is NetworkResult.Success -> {
+                val list = result.data
+                _listUiState.value = if (list.isEmpty()) ConcertListUiState.Empty
+                else ConcertListUiState.Success(list, isOffline = false)
+            }
+            is NetworkResult.Error -> {
+                // Fallback на кеш при помилці мережі (ЛР №9 Завдання 5)
+                val cached = repository.cachedConcerts?.first()
+                _listUiState.value = if (!cached.isNullOrEmpty())
+                    ConcertListUiState.Success(cached, isOffline = true)
+                else
+                    ConcertListUiState.Error(result.message)
+            }
+            is NetworkResult.Loading -> Unit
+        }
+    }
+
     // ЛР №9 Завдання 3 + 5: Завантаження з мережі з fallback на кеш
+    // ЛР №1 Рефакторинг: делегує у handleConcertListResult() (CC знижено)
     fun loadConcerts() {
         viewModelScope.launch {
             _listUiState.value = ConcertListUiState.Loading
-
-            when (val result = repository.getAllConcerts()) {
-                is NetworkResult.Success -> {
-                    val list = result.data
-                    _listUiState.value = if (list.isEmpty()) {
-                        ConcertListUiState.Empty
-                    } else {
-                        ConcertListUiState.Success(list, isOffline = false)
-                    }
-                }
-                is NetworkResult.Error -> {
-                    // Завдання 5: показати кешовані дані при помилці мережі
-                    val cached = repository.cachedConcerts?.first()
-                    if (!cached.isNullOrEmpty()) {
-                        _listUiState.value = ConcertListUiState.Success(cached, isOffline = true)
-                    } else {
-                        _listUiState.value = ConcertListUiState.Error(result.message)
-                    }
-                }
-                is NetworkResult.Loading -> Unit
-            }
+            handleConcertListResult(repository.getAllConcerts())
         }
     }
 
     // ЛР №11 Завдання 4: Pull-to-refresh — оновлення через ViewModel → Repository → API
+    // ЛР №1 Рефакторинг: делегує у handleConcertListResult() для списку (CC знижено)
     fun refreshConcerts() {
         viewModelScope.launch {
             _isRefreshing.value = true
-            // Візуальна затримка для наочності індикатора (імітація мережевого запиту)
-            delay(800)
-            when (val result = repository.getAllConcerts()) {
-                is NetworkResult.Success -> {
-                    val list = result.data
-                    _listUiState.value = if (list.isEmpty()) {
-                        ConcertListUiState.Empty
-                    } else {
-                        ConcertListUiState.Success(list, isOffline = false)
-                    }
-                    _uiEvents.emit(UiEvent.ShowSnackbar("Список оновлено (${list.size} концертів)"))
-                }
-                is NetworkResult.Error -> {
+            delay(800) // Візуальна затримка для наочності індикатора
+            val result = repository.getAllConcerts()
+            handleConcertListResult(result)
+            // Додаткова поведінка refresh: Snackbar зі статусом
+            when (result) {
+                is NetworkResult.Success ->
+                    _uiEvents.emit(UiEvent.ShowSnackbar("Список оновлено (${result.data.size} концертів)"))
+                is NetworkResult.Error ->
                     _uiEvents.emit(UiEvent.ShowSnackbar("Не вдалося оновити: ${result.message}"))
-                }
                 is NetworkResult.Loading -> Unit
             }
             _isRefreshing.value = false
