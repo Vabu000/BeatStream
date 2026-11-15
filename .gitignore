@@ -16,3 +16,10 @@ local.properties
 # ЛР №1: SonarCloud scanner (завантажується автоматично scan.bat)
 .sonar-scanner/
 .scannerwork/
+.env
+
+# Локальні звіти та інструкції до лабораторних — не відправляти в GitHub
+/REPORT_LABS_*.md
+/SCREENSHOT_COMMANDS_LABS_*.md
+/LABS_*_STATUS_AND_SCREENSHOTS.md
+/screenshots/
