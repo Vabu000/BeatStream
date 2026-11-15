@@ -71,6 +71,7 @@ jobs:
           SONAR_HOST_URL: https://sonarcloud.io
 
       - name: Fetch SonarCloud metrics
+        if: ${{ github.event_name == 'push' && github.ref == 'refs/heads/main' }}
         shell: pwsh
         env:
           SONAR_TOKEN: ${{ secrets.SONAR_TOKEN }}
@@ -79,6 +80,7 @@ jobs:
         run: ./scripts/audit/sonar_metrics.ps1
 
       - name: Upload SonarCloud JSON
+        if: ${{ github.event_name == 'push' && github.ref == 'refs/heads/main' }}
         uses: actions/upload-artifact@v7
         with:
           name: beatstream-sonar-metrics
