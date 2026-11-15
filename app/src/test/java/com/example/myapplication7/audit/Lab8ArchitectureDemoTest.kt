@@ -20,17 +20,14 @@ class Lab8ArchitectureDemoTest {
     }
 
     @Test
-    fun compositionRemovesTheSyntheticInheritanceChainWithoutChangingThePrice() {
-        val inheritedPrice = VipPolicy().price(basePrice = 100, region = "north")
+    fun compositionPreservesTheExpectedPriceWithoutInheritance() {
         val composedPrice = ComposedPricePolicy(FlatPriceRule()).price(
             basePrice = 100,
             region = "north"
         )
 
-        assertEquals(80, inheritedPrice)
-        assertEquals(inheritedPrice, composedPrice)
-        println("[BASELINE] synthetic inheritance depth=3; overridden methods=3")
-        println("[PASS] composition matches inherited behavior; composed class has no overrides")
+        assertEquals(80, composedPrice)
+        println("[PASS] composition preserves the expected price with no custom superclass")
     }
 }
 
@@ -81,25 +78,6 @@ private class CheckoutCoordinator(
         receipts.send(request.userId, amount)
         return true
     }
-}
-
-private open class RootPolicy {
-    open fun price(basePrice: Int, region: String, currency: String): Int = basePrice
-}
-
-private open class RegionalPolicy : RootPolicy() {
-    override fun price(basePrice: Int, region: String): Int =
-        super.price(basePrice, region) - if (region == "north") 5 else 0
-}
-
-private open class WeekendPolicy : RegionalPolicy() {
-    override fun price(basePrice: Int, region: String): Int =
-        super.price(basePrice, region) - 5
-}
-
-private class VipPolicy : WeekendPolicy() {
-    override fun price(basePrice: Int, region: String): Int =
-        super.price(basePrice, region) - 10
 }
 
 private fun interface PriceRule {
