@@ -6,14 +6,8 @@ import org.junit.Test
 
 class Lab8ArchitectureDemoTest {
     @Test
-    fun concreteCoordinatorAndInterfaceDecompositionPreserveCheckoutBehavior() {
-        val legacy = LegacyCheckoutGodObject(
-            catalog = LegacyCatalog(),
-            inventory = FakeInventory(),
-            payments = FakePayments(),
-            receipts = FakeReceipts()
-        )
-        val decomposed = CheckoutCoordinator(
+    fun interfaceBasedCoordinatorPreservesCheckoutBehavior() {
+        val coordinator = CheckoutCoordinator(
             catalog = FakeCatalog(),
             inventory = FakeInventory(),
             payments = FakePayments(),
@@ -21,9 +15,7 @@ class Lab8ArchitectureDemoTest {
         )
         val request = CheckoutRequest(itemId = "concert-1", userId = "user-1")
 
-        assertTrue(legacy.checkout(request))
-        assertTrue(decomposed.checkout(request))
-        println("[FAIL simulation] concrete coordinator depends directly on four collaborators")
+        assertTrue(coordinator.checkout(request))
         println("[PASS] interface-based coordinator preserves checkout behavior")
     }
 
@@ -64,10 +56,6 @@ private class FakeCatalog : CatalogPort {
     override fun priceFor(itemId: String): Int? = if (itemId == "concert-1") 100 else null
 }
 
-private class LegacyCatalog {
-    fun priceFor(itemId: String, region: String): Int? = if (itemId == "concert-1") 100 else null
-}
-
 private class FakeInventory : InventoryPort {
     override fun reserve(itemId: String): Boolean = itemId == "concert-1"
 }
@@ -78,21 +66,6 @@ private class FakePayments : PaymentPort {
 
 private class FakeReceipts : ReceiptPort {
     override fun send(userId: String, amount: Int) = Unit
-}
-
-private class LegacyCheckoutGodObject(
-    private val catalog: LegacyCatalog,
-    private val inventory: FakeInventory,
-    private val payments: FakePayments,
-    private val receipts: FakeReceipts
-) {
-    fun checkout(request: CheckoutRequest): Boolean {
-        val amount = catalog.priceFor(request.itemId) ?: return false
-        if (!inventory.reserve(request.itemId)) return false
-        if (!payments.charge(request.userId, amount)) return false
-        receipts.send(request.userId, amount)
-        return true
-    }
 }
 
 private class CheckoutCoordinator(
@@ -141,4 +114,3 @@ private class FlatPriceRule : PriceRule {
 private class ComposedPricePolicy(private val rule: PriceRule) {
     fun price(basePrice: Int, region: String): Int = rule.price(basePrice, region)
 }
-
