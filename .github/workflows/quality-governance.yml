@@ -64,6 +64,9 @@ jobs:
       - name: Compile Kotlin for analysis
         run: bash ./gradlew :app:compileDebugKotlin
 
+      - name: Generate JaCoCo unit test coverage report
+        run: bash ./gradlew :app:testDebugUnitTest :app:createDebugUnitTestCoverageReport
+
       - name: Scan with SonarCloud
         uses: SonarSource/sonarqube-scan-action@v8.3.0
         env:
