@@ -84,7 +84,7 @@ private class CheckoutCoordinator(
 }
 
 private open class RootPolicy {
-    open fun price(basePrice: Int, region: String): Int = basePrice
+    open fun price(basePrice: Int, region: String, currency: String): Int = basePrice
 }
 
 private open class RegionalPolicy : RootPolicy() {
@@ -114,3 +114,4 @@ private class FlatPriceRule : PriceRule {
 private class ComposedPricePolicy(private val rule: PriceRule) {
     fun price(basePrice: Int, region: String): Int = rule.price(basePrice, region)
 }
+
