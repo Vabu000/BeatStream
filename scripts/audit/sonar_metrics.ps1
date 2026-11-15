@@ -16,6 +16,8 @@ if ([string]::IsNullOrWhiteSpace($token)) {
 }
 
 $base = $BaseUrl.TrimEnd("/")
+$pullRequest = $env:SONAR_PULL_REQUEST
+$branch = $env:SONAR_BRANCH
 $headers = @{
     Authorization = "Basic " + [Convert]::ToBase64String([Text.Encoding]::ASCII.GetBytes("${token}:"))
 }
@@ -46,7 +48,17 @@ New-Item -ItemType Directory -Force -Path $out | Out-Null
 $components = @()
 foreach ($path in $ComponentPaths) {
     $componentKey = "${ProjectKey}:$path"
-    $query = "component=$([Uri]::EscapeDataString($componentKey))&metricKeys=$([Uri]::EscapeDataString(($supportedMetrics -join ',')))"
+    $queryParts = @(
+        "component=$([Uri]::EscapeDataString($componentKey))",
+        "metricKeys=$([Uri]::EscapeDataString(($supportedMetrics -join ',')))"
+    )
+    if (-not [string]::IsNullOrWhiteSpace($pullRequest)) {
+        $queryParts += "pullRequest=$([Uri]::EscapeDataString($pullRequest))"
+    }
+    elseif (-not [string]::IsNullOrWhiteSpace($branch)) {
+        $queryParts += "branch=$([Uri]::EscapeDataString($branch))"
+    }
+    $query = $queryParts -join "&"
     $uri = "$base/api/measures/component?$query"
     $response = Invoke-RestMethod -Method Get -Uri $uri -Headers $headers
     if (-not $response.component) {
